@@ -88,7 +88,7 @@ ex2_plot <- ggplot(plot_df) +
   scale_color_manual(name = "Cell Line", labels = c("B353-A", "B353-V"), 
                      values = c("a_cells" = "cornflowerblue", 
                                  "v_cells" = "darkorchid4")) + 
-  xlab("Dose of Ionising Mutation (Gray)") + ylab("Surviving Fraction (%)") + 
+  xlab("Dose of Ionising Mutation (Gray)") + ylab("% Survival of Cells") + 
   labs(title = "Survival of B353-V and B353-A Cell Lines
        Exposed to Ionising Radiation") +
   scale_x_continuous(expand = expansion(mult = c(0, 0.005))) + 
