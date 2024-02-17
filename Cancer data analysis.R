@@ -61,8 +61,6 @@ ex2v_data <- ex2v_data[,-1]
 ex2_data <- list("A" = ex2a_data, "V" = ex2v_data)
 
 # Calculations required to find log survival----------
-se <- function(x) sd(x)/sqrt(length(x)) # creating a standard error function
-
 for(i in 1:2){
   # Calculating mean
   ex2_data[[i]]["Exp 1 mean",] <- apply(ex2_data[[i]][3:5,], 2, mean)
@@ -87,7 +85,7 @@ for(i in 1:2){
   
   
   # Standard error of % survival (for SE bars)
-  ex2_data[[i]]["se",] <- apply(ex2_data[[i]][20:22,], 2, se)
+  ex2_data[[i]]["sd",] <- apply(ex2_data[[i]][20:22,], 2, sd)
 }
 
 View(ex2_data[["A"]])
@@ -97,17 +95,17 @@ View(ex2_data[["V"]])
 plot_df <- data.frame("dose" = c(0, 1, 5, 10, 20),
                       "a_cells" = as.numeric(ex2_data[["A"]]["survival",]),
                       "v_cells" = as.numeric(ex2_data[["V"]]["survival",]),
-                      "a_se" = as.numeric(ex2_data[["A"]]["se",]),
-                      "v_se" = as.numeric(ex2_data[["V"]]["se",]))
+                      "a_sd" = as.numeric(ex2_data[["A"]]["sd",]),
+                      "v_sd" = as.numeric(ex2_data[["V"]]["sd",]))
 
 ex2_plot <- ggplot(plot_df) + 
   geom_line(aes(x = dose, y = a_cells, colour = "a_cells")) + 
   geom_point(aes(x = dose, y = a_cells, colour = "a_cells"), size = 2) +
-  geom_errorbar(aes(x = dose, ymin = a_cells - a_se, ymax = a_cells + a_se, width = 0.4)) +
+  geom_errorbar(aes(x = dose, ymin = a_cells - a_sd, ymax = a_cells + a_sd, width = 0.4), colour = "darkblue") +
   
   geom_line(aes(x = dose, y = v_cells, colour = "v_cells")) + 
   geom_point(aes(x = dose, y = v_cells, colour = "v_cells"), size = 2) +
-  geom_errorbar(aes(x = dose, ymin = v_cells - v_se, ymax = v_cells + v_se, width = 0.4)) +
+  geom_errorbar(aes(x = dose, ymin = v_cells - v_sd, ymax = v_cells + v_sd, width = 0.4), colour = "magenta4") +
   
   scale_color_manual(name = "Cell Line", labels = c("B353-A", "B353-V"), 
                      values = c("a_cells" = "cornflowerblue", 
