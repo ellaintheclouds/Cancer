@@ -28,10 +28,10 @@ ex1_plot <-
   geom_point(aes(colour  = gene_name), size = 2) +
   scale_x_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) + 
   scale_y_continuous(limits = c(0, 0.25), expand = expansion(mult = c(0, 0))) + 
-  xlab("Proportion of Total Mutations by 
+  xlab("Proportion of Total Mutations Accounted for by 
        Most Frequently Mutated Amino Acid") + 
   ylab("Proportion of Truncating Mutations") +
-  labs(title = "Novel Cancer Mutational Profile: Proportion of 
+  labs(title = "Rare Cancer Mutational Profile: Proportion of 
        Truncations vs Mutational 'Hot-Spots'", colour = "Gene") + 
   scale_colour_brewer(palette = "Paired") + 
   theme_bw() +
@@ -61,15 +61,33 @@ ex2v_data <- ex2v_data[,-1]
 ex2_data <- list("A" = ex2a_data, "V" = ex2v_data)
 
 # Calculations required to find log survival----------
+se <- function(x) sd(x)/sqrt(length(x)) # creating a standard error function
+
 for(i in 1:2){
   # Calculating mean
-  ex2_data[[i]]["mean",] <- apply(ex2_data[[i]][3:11,], 2, mean)
+  ex2_data[[i]]["Exp 1 mean",] <- apply(ex2_data[[i]][3:5,], 2, mean)
+  ex2_data[[i]]["Exp 2 mean",] <- apply(ex2_data[[i]][6:8,], 2, mean)
+  ex2_data[[i]]["Exp 3 mean",] <- apply(ex2_data[[i]][9:11,], 2, mean)
+  
+  ex2_data[[i]]["mean",] <- apply(ex2_data[[i]][12:14,], 2, mean)
   
   # Efficiency (number of colonies/number of cells plated)
+  ex2_data[[i]]["Exp 1 efficiency",] <- ex2_data[[i]]["Exp 1 mean",]/ex2_data[[i]]["cell_count",]
+  ex2_data[[i]]["Exp 2 efficiency",] <- ex2_data[[i]]["Exp 2 mean",]/ex2_data[[i]]["cell_count",]
+  ex2_data[[i]]["Exp 3 efficiency",] <- ex2_data[[i]]["Exp 3 mean",]/ex2_data[[i]]["cell_count",]
+  
   ex2_data[[i]]["efficiency",] <- ex2_data[[i]]["mean",]/ex2_data[[i]]["cell_count",]
   
   # % Survival (efficiency at each dose of radiation/efficiency in untreated)
+  ex2_data[[i]]["Exp 1 survival",] <- (ex2_data[[i]]["Exp 1 efficiency",]/ex2_data[[i]]["Exp 1 efficiency", 1])*100
+  ex2_data[[i]]["Exp 2 survival",] <- (ex2_data[[i]]["Exp 2 efficiency",]/ex2_data[[i]]["Exp 2 efficiency", 1])*100
+  ex2_data[[i]]["Exp 3 survival",] <- (ex2_data[[i]]["Exp 3 efficiency",]/ex2_data[[i]]["Exp 3 efficiency", 1])*100
+  
   ex2_data[[i]]["survival",] <- (ex2_data[[i]]["efficiency",]/ex2_data[[i]]["efficiency", 1])*100
+  
+  
+  # Standard error of % survival (for SE bars)
+  ex2_data[[i]]["se",] <- apply(ex2_data[[i]][20:22,], 2, se)
 }
 
 View(ex2_data[["A"]])
@@ -78,17 +96,23 @@ View(ex2_data[["V"]])
 # Plot----------
 plot_df <- data.frame("dose" = c(0, 1, 5, 10, 20),
                       "a_cells" = as.numeric(ex2_data[["A"]]["survival",]),
-                      "v_cells" = as.numeric(ex2_data[["V"]]["survival",]))
+                      "v_cells" = as.numeric(ex2_data[["V"]]["survival",]),
+                      "a_se" = as.numeric(ex2_data[["A"]]["se",]),
+                      "v_se" = as.numeric(ex2_data[["V"]]["se",]))
 
 ex2_plot <- ggplot(plot_df) + 
   geom_line(aes(x = dose, y = a_cells, colour = "a_cells")) + 
   geom_point(aes(x = dose, y = a_cells, colour = "a_cells"), size = 2) +
+  geom_errorbar(aes(x = dose, ymin = a_cells - a_se, ymax = a_cells + a_se, width = 0.4)) +
+  
   geom_line(aes(x = dose, y = v_cells, colour = "v_cells")) + 
-  geom_point(aes(x = dose, y = v_cells, colour = "v_cells"), size = 2) + 
+  geom_point(aes(x = dose, y = v_cells, colour = "v_cells"), size = 2) +
+  geom_errorbar(aes(x = dose, ymin = v_cells - v_se, ymax = v_cells + v_se, width = 0.4)) +
+  
   scale_color_manual(name = "Cell Line", labels = c("B353-A", "B353-V"), 
                      values = c("a_cells" = "cornflowerblue", 
-                                 "v_cells" = "darkorchid4")) + 
-  xlab("Dose of Ionising Mutation (Gray)") + ylab("% Survival of Cells") + 
+                                 "v_cells" = "plum")) + 
+  xlab("Dose of Ionising Mutation (Gy)") + ylab("Clonogenic Survival (%)") + 
   labs(title = "Survival of B353-V and B353-A Cell Lines
        Exposed to Ionising Radiation") +
   scale_x_continuous(expand = expansion(mult = c(0, 0.005))) + 
